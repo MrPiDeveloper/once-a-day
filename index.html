@@ -1,23 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Once-A-Day!</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 <style>
-:root{--bg:#f2e3d5;--bg-dark:#2f2521;--card:#fff;--card-dark:#1e1714;--text:#1a1a1a;--text-dark:#f3f3f3;--accent:#c97b63}
+:root{--bg:#f2e3d5;--bg-dark:#2f2521;--card:#fff;--card-dark:#1e1714;--text:#1a1a1a;--text-dark:#f3f3f3}
 body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);transition:.3s}
 body.dark{background:var(--bg-dark);color:var(--text-dark)}
 .container{max-width:420px;margin:auto;padding:14px}
 .topbar{display:flex;justify-content:space-between;font-size:.85rem;opacity:.85}
-h1{font-family:'Press Start 2P', monospace;font-size:1.1rem;text-align:center;margin:10px 0}
-.card{background:var(--card);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 10px 25px rgba(0,0,0,.08);animation:fade .35s}
+h1{font-family:'Press Start 2P',monospace;font-size:1.1rem;text-align:center;margin:10px 0}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 10px 25px rgba(0,0,0,.08);transition:background .4s ease,transform .3s ease}
 body.dark .card{background:var(--card-dark)}
-@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
-select,input,textarea,button{width:100%;padding:10px;border-radius:12px;border:1px solid #ccc;margin-top:8px;font-size:1rem}
+select,textarea,button{width:100%;padding:10px;border-radius:12px;border:1px solid #ccc;margin-top:8px}
+input{width:93.7%;padding:10px;border-radius:12px;border:1px solid #ccc;margin-top:8px}
 body.dark select,body.dark input,body.dark textarea{background:#3a2c26;color:#f3f3f3;border-color:#5a463f}
 button:hover{transform:scale(1.02)}
 .reels{height:360px;overflow-y:auto;scroll-snap-type:y mandatory}
@@ -27,239 +25,456 @@ button:hover{transform:scale(1.02)}
 .icon:hover{transform:scale(1.15)}
 .heart.active{color:red}.down.active{color:dodgerblue}.share.active{color:green}
 .hidden{display:none}
-.privacy{position:fixed;bottom:14px;right:14px;font-size:.8rem;opacity:.6;cursor:pointer}
-.owner-page{display:none}
-.back{cursor:pointer;display:flex;align-items:center;gap:6px;font-size:.9rem}
-table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
-th,td{border:1px solid #ccc;padding:8px;min-width:180px;vertical-align:top}
+.footer-btn{position:fixed;bottom:14px;font-size:.8rem;opacity:.6;cursor:pointer}
+.privacy{right:14px}.about{left:14px}.faq{left:80px}.owner{left:140px}
+.ad-note{font-size:.75rem;opacity:.7;margin-bottom:8px;text-align:center}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .45s}
+.confetti{position:fixed;top:-10px;width:8px;height:12px;opacity:.9;animation:fall 1.2s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:0}}
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:90px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#222;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:12px;
+  font-size:.85rem;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s, transform .25s;
+  z-index:9999;
+}
+body.dark #toast{ background:#f3f3f3; color:#111; }
+.icon.share.copied{
+  animation: pop .35s ease;
+  color: #2ecc71;
+}
+#toast{
+  transform:translateX(-50%) translateY(8px);
+}
+#toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.icon.share.copied{
+  animation: pop .35s ease;
+  color: #2ecc71;
+}
+
+@keyframes pop{
+  0%{ transform:scale(1); }
+  50%{ transform:scale(1.35); }
+  100%{ transform:scale(1); }
+}
+
 </style>
 </head>
-<body>
-<div class="container" id="main">
+<body><!-- MAIN --><div class="container" id="main">
   <div class="topbar">
+    <div id="streak"></div>
     <div id="date"></div>
-    <label><input type="checkbox" onchange="toggleDark()"> 🌙</label>
+    <label><input type="checkbox" id="darkToggle"> 🌙</label>
   </div>
-  <h1>Once-A-Day!</h1>
-  <div class="card" id="topicCard">
+  <h1 onclick="openMain()">Once-A-Day!</h1>  <div class="card" id="topicCard">
     <b>Choose today’s topic</b>
     <select id="topic"></select>
-    <button onclick="lockTopic()">Start</button>
-  </div>
-  <div class="card hidden" id="factsCard">
+    <button type="button" id="startBtn">Start</button>
+  </div>  <div class="card hidden" id="factsCard">
+    <div class="ad-note">By watching ads, you help support this project ❤️</div>
     <b>Facts & Vocabulary</b>
     <div class="reels" id="reels"></div>
-  </div>
-  <div class="card hidden" id="mysteryCard">
+  </div>  <div class="card hidden" id="mysteryCard">
+    <div class="ad-note">Once-A-Day! was made by just one person. Seeing ads helps keep it alive 🙏</div>
     <b>Daily Mystery</b>
     <p id="q"></p>
     <input id="ans" placeholder="Your answer">
-    <button onclick="check()">Submit</button>
+    <button type="button" onclick="check()">Submit</button>
     <p id="res"></p>
   </div>
+</div><!-- LIKED --><div class="container hidden" id="likedPanel">
+  <b>Liked Thoughts</b>
+  <div id="likedList"></div>
+</div><!-- OWNER LOGIN --><div class="container hidden" id="ownerPage">
+  <button onclick="closeOwner()">← Back</button>
+  <h2>Owner Login</h2>
+  <input id="ownerUser" placeholder="Username">
+  <input id="ownerPass" type="password" placeholder="Password">
+  <button onclick="loginOwner()">Login</button>
+  <p id="ownerMsg"></p>
+</div><!-- OWNER EDITOR --><div class="container hidden" id="editorPage">
+  <button onclick="closeEditor()">← Back</button>
+  <h2>Owner Editor</h2>
+  <button onclick="addDay()">+ Add Day</button>
+  <table id="editorTable"></table>
+</div><!-- STATIC PAGES --><div class="container hidden" id="aboutPage">
+  <button class="back-btn" data-target="main" onclick="closeAbout()">← Back</button>
+  <h2>About Once-A-Day!</h2>
+  <p><b>Once-A-Day!</b> is a daily micro-learning experience designed to make curiosity addictive.</p>
+  <p>Each day, you choose a topic and explore a small set of ideas: facts, vocabulary, and one mystery question — just enough to spark wonder without overwhelm.</p>
+  <p>No feeds. No doomscrolling. Just one meaningful thought a day.</p>
+  <p>This project blends science, humanities, and playful design to help learning feel lightweight and rewarding.</p>
 </div>
-<div class="container owner-page" id="ownerPage">
-  <div class="back" onclick="exitOwner()"><i data-lucide="arrow-left"></i> Back</div>
-  <h2>Owner Scheduler</h2>
-  <table id="schedule"></table>
-  <button onclick="addDay()">➕ Add Day</button>
-</div>
-<div class="container hidden" id="privacyPage">
-  <div class="back" onclick="closePrivacy()"><i data-lucide="arrow-left"></i> Back</div>
-  <h2>Privacy Policy</h2>
-  <p>Privacy Policy for Once-A-Day!
-
-Last updated: January 2026
-
-Once-A-Day! is a simple educational website designed to provide daily science, math, philosophy, and vocabulary content. Your privacy matters, and this page explains clearly what data is (and is not) collected.
-
-
----
-
-1. Information We Collect
-
-Once-A-Day! does not collect personal information such as names, email addresses, or account details.
-
-However, the website uses browser storage (localStorage) to:
-
-Remember your topic choice for the day
-
-Remember whether you completed today’s puzzles
-
-Save preferences like dark mode
-
-
-This data never leaves your device and is not sent to any server.
-
-
----
-
-2. Cookies and Similar Technologies
-
-Once-A-Day! itself does not use cookies.
-
-However, third-party services such as Google AdSense may use cookies or similar technologies to:
-
-Show relevant ads
-
-Measure ad performance
-
-
-Google may use the DoubleClick cookie, which allows ads to be shown based on visits to this and other websites.
-
-You can learn more about Google’s advertising practices here: https://policies.google.com/technologies/ads
-
-
----
-
-3. Third-Party Ads (Google AdSense)
-
-Once-A-Day! may display advertisements provided by Google AdSense.
-
-Google AdSense may collect:
-
-Device information
-
-IP address
-
-Browser type
-
-
-This information is handled by Google according to their own privacy policy.
-
-You can opt out of personalized advertising by visiting: https://adssettings.google.com
-
-
----
-
-4. Children’s Information
-
-Once-A-Day! is designed for general educational use.
-
-We do not knowingly collect personal data from children under 13. Since no accounts or personal submissions are required, children can use the site safely under parental guidance.
-
-
----
-
-5. Data Security
-
-Because Once-A-Day! does not store user data on servers, there is no risk of database leaks or account breaches.
-
-All preferences are stored locally in your browser.
-
-
----
-
-6. Changes to This Policy
-
-This privacy policy may be updated occasionally. Any changes will be reflected on this page with a new update date.
-
-
----
-
-7. Contact
-
-If you have questions about this privacy policy, you can contact the site owner via the platform where Once-A-Day! is hosted.
-
-
----
-
-By using Once-A-Day!, you agree to this privacy policy.</p>
-</div>
-<div class="privacy" onclick="openPrivacy()">Privacy</div>
+<div class="container hidden" id="privacyPage"><button class="back-btn" data-target="main" onclick="closePrivacy()">← Back</button>
+<p><b>Last updated: January 2026</b><br><br>
+Welcome to Once-A-Day!. We value your privacy and are committed to protecting it. This Privacy Policy explains how information is collected, used, and protected when you visit or interact with our website. By using Once-A-Day!, you agree to this Privacy Policy.<br><br>
+Once-A-Day! does not require users to create accounts, sign in, or provide personal information such as names, email addresses, phone numbers, or physical addresses. We do not knowingly collect personal data from users.<br><br>
+Like most websites, Once-A-Day! automatically collects certain non-personal information including browser type, device type, operating system, language preference, referring pages, date and time of visits, general location based on IP address, and interactions with pages. This information is used solely to understand how the site is used, improve performance, enhance content quality, and maintain security.<br><br>
+Once-A-Day! may use cookies, localStorage, or similar technologies to remember preferences such as dark mode, topic selection, daily interaction limits, and general usability improvements. These technologies do not store personal information and are used only to enhance user experience. Users can disable cookies in their browser settings, although some features of the website may not function properly.<br><br>
+Third-party services, including advertising networks, may place cookies or use similar technologies to display advertisements, measure performance, prevent fraud, and personalize ad experiences. Once-A-Day! does not control these third-party cookies or tracking methods.<br><br>
+We use third-party advertising partners such as Adsterra. These partners may collect non-personal information including anonymized IP addresses, browser and device data, approximate location, and interactions with advertisements. This information is used to deliver relevant ads and analyze advertising performance. Once-A-Day! does not have access to or control over data collected by advertisers.<br><br>
+In the future, Once-A-Day! may work with additional advertising providers such as Google AdSense, Media.net, or other contextual advertising platforms. Each advertising provider operates under its own privacy policies.<br><br>
+The information collected through the website is used to improve site functionality, understand usage patterns, enhance educational content, maintain security, prevent abuse, and support website operations through advertising. Once-A-Day! does not sell, rent, or trade user information.<br><br>
+Once-A-Day! does not knowingly collect information from children under the age of 13. The website does not request personal data and does not require registration. If a parent or guardian believes a child has provided personal information, they should contact the website and the information will be removed if applicable.<br><br>
+We take reasonable steps to protect information by minimizing data collection and using secure hosting services. However, no method of transmission over the internet is completely secure, and absolute security cannot be guaranteed.<br><br>
+Depending on your location, you may have rights under data protection laws such as GDPR or CCPA, including the right to access or delete personal data. Since Once-A-Day! does not store personal information, these rights generally do not apply.<br><br>
+By using Once-A-Day!, you consent to this Privacy Policy and agree to its terms. If you do not agree, please discontinue use of the website.<br><br>
+Once-A-Day! may contain links to external websites. We are not responsible for the privacy practices, content, or data collection methods of third-party websites. Users are encouraged to review the privacy policies of any external sites they visit.<br><br>
+This Privacy Policy may be updated at any time. Any changes will be posted on this page with an updated revision date. Continued use of the website after changes are made constitutes acceptance of the updated policy.</p></div>
+<div class="container hidden" id="faqPage">
+  <button class="back-btn" data-target="main" onclick="closeFAQ()">← Back</button>
+  <h2>FAQ</h2>
+  <p><b>1. Do I need an account?</b><br>No. Everything works without signing up.</p>
+  <p><b>2. Why only a few items per day?</b><br>Learning sticks better in small, focused doses.</p>
+  <p><b>3. What topics are available?</b><br>Science, math, philosophy, history, geography, and more.</p>
+  <p><b>4. How does the streak work?</b><br>Your streak increases when you visit on a new day.</p>
+  <p><b>5. Are my likes saved?</b><br>Yes, they’re stored locally on your device.</p>
+  <p><b>6. Is this kid-friendly?</b><br>Yes, content is designed to be safe and educational.</p>
+  <p><b>7. Will there be more features?</b><br>Yes. This is an evolving project.</p>
+</div><div data-target="aboutPage" class="footer-btn about" onclick="showPage('aboutPage')">About</div>
+<div data-target="faqPage" class="footer-btn faq" onclick="showPage('faqPage')">FAQ</div>
+<div data-target="privacyPage" class="footer-btn privacy" onclick="showPage('privacyPage')">Privacy</div>
 <script>
-lucide.createIcons();
-const clickSound=new Howl({src:['https://freesound.org/data/previews/522/522363_10746624-lq.mp3'],volume:0.3});
+/* ---------- GLOBAL DOM ---------- */
+let topicCard, factsCard, mysteryCard, likedPanel, topicSelect, q, reels, likedList;
+let likedThoughts = JSON.parse(localStorage.getItem('likedThoughts') || '[]');
+const todayKey = new Date().toISOString().slice(0,10);
 
-const now=new Date();
-document.getElementById('date').textContent=now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-const today=now.toISOString().slice(0,10);
+/* ---------- DOM READY ---------- */
+document.addEventListener('DOMContentLoaded', () => {
 
-const TOPICS=['Physics','Chemistry','Biology','Math','Philosophy','Astronomy'];
-const topicSelect=document.getElementById('topic');
-TOPICS.forEach(t=>{const opt=document.createElement('option'); opt.value=t; opt.textContent=t; topicSelect.appendChild(opt);});
+  topicCard   = document.getElementById('topicCard');
+  factsCard   = document.getElementById('factsCard');
+  mysteryCard = document.getElementById('mysteryCard');
+  likedPanel  = document.getElementById('likedPanel');
+  topicSelect = document.getElementById('topic');
+  q           = document.getElementById('q');
+  reels       = document.getElementById('reels');
+  likedList   = document.getElementById('likedList');
 
-const example={
-Physics:{items:[{type:'fact',text:'Light behaves as both a wave and a particle.'},{type:'vocab',word:'Inertia',meaning:'Resistance to change in motion.'},{type:'fact',text:'Time slows near massive objects.'}],q:'I move without legs. What am I?',a:'light'},
-Chemistry:{items:[{type:'fact',text:'Atoms bond to reach stability.'},{type:'vocab',word:'Catalyst',meaning:'Speeds up reactions without being used.'}],q:'Salt is Na__?',a:'cl'},
-Biology:{items:[{type:'fact',text:'Cells are the basic unit of life.'},{type:'vocab',word:'Osmosis',meaning:'Water diffusion across membranes.'}],q:'Powerhouse of the cell?',a:'mitochondria'},
-Math:{items:[{type:'vocab',word:'Infinity',meaning:'Unbounded quantity.'},{type:'fact',text:'Pi never repeats.'}],q:'Angles in triangle sum to?',a:'180'},
-Philosophy:{items:[{type:'fact',text:'Socrates taught through questioning.'},{type:'vocab',word:'Ethics',meaning:'Study of moral values.'}],q:'I think therefore I am — who?',a:'descartes'},
-Astronomy:{items:[{type:'fact',text:'Black holes warp spacetime.'},{type:'vocab',word:'Nebula',meaning:'Cloud of gas and dust.'}],q:'Our galaxy?',a:'milky way'}
+  /* ---------- DARK MODE ---------- */
+  document.getElementById('darkToggle')
+    .addEventListener('change', e =>
+      document.body.classList.toggle('dark', e.target.checked)
+    );
+
+  /* ---------- TOPICS ---------- */
+  const TOPICS = ['-Select Topic-','Physics','Biology','History'];
+  TOPICS.forEach(t=>{
+    const o=document.createElement('option');
+    o.value=o.textContent=t;
+    topicSelect.appendChild(o);
+  });
+
+  /* ---------- DATE ---------- */
+  const now = new Date();
+  document.getElementById('date').textContent =
+    now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  /* ---------- STREAK ---------- */
+  let streak = Number(localStorage.getItem('streak')||0);
+  let lastAttempt = localStorage.getItem('lastAttempt');
+  if(!lastAttempt){ streak = 1; localStorage.setItem('lastAttempt', todayKey); }
+  localStorage.setItem('streak', streak);
+  document.getElementById('streak').textContent = `🔥 ${streak}-day streak`;
+
+
+ /* ---------- 2 DAYS OF CONTENT ---------- */
+const today = new Date();
+const day1Key = today.toISOString().slice(0,10);
+
+const day2 = new Date(today);
+day2.setDate(today.getDate() + 1);
+const day2Key = day2.toISOString().slice(0,10);
+
+window.CONTENT = {};
+
+/* ================= DAY 1 ================= */
+CONTENT[day1Key] = {
+
+  Physics: {
+    items: [
+      { type: 'fact', text: 'Light travels at a constant speed in a vacuum.' },
+      { type: 'vocab', word: 'Force', meaning: 'A push or pull that can change motion.' },
+      { type: 'fact', text: 'Gravity attracts objects with mass.' }
+    ],
+    q: 'What force pulls objects toward Earth?',
+    a: ['gravity']
+  },
+
+  Biology: {
+    items: [
+      { type: 'fact', text: 'All living things are made of cells.' },
+      { type: 'vocab', word: 'Cell', meaning: 'The smallest unit of life.' },
+      { type: 'fact', text: 'Plants make food using sunlight.' }
+    ],
+    q: 'What is the basic unit of life?',
+    a: ['cell']
+  },
+
+  History: {
+    items: [
+      { type: 'fact', text: 'Writing allowed people to record information.' },
+      { type: 'vocab', word: 'Civilization', meaning: 'A complex society with cities and culture.' },
+      { type: 'fact', text: 'The printing press spread knowledge widely.' }
+    ],
+    q: 'What invention helped spread knowledge quickly?',
+    a: ['printing press', 'press']
+  }
+
 };
 
-let DB=JSON.parse(localStorage.getItem('oad_'+today))||{};
+/* ================= DAY 2 ================= */
+CONTENT[day2Key] = {
 
-function lockTopic(){clickSound.play(); localStorage.setItem('topic_'+today,topicSelect.value); start(topicSelect.value);}
+  Physics: {
+    items: [
+      { type: 'fact', text: 'Sound travels as waves through air.' },
+      { type: 'vocab', word: 'Energy', meaning: 'The ability to do work or cause change.' },
+      { type: 'fact', text: 'Objects fall at the same rate in a vacuum.' }
+    ],
+    q: 'What allows objects to move or change?',
+    a: ['energy']
+  },
 
-function start(t){
+  Chemistry: {
+    items: [
+      { type: 'fact', text: 'Water is made of hydrogen and oxygen.' },
+      { type: 'vocab', word: 'Atom', meaning: 'The smallest unit of an element.' },
+      { type: 'fact', text: 'Chemical reactions form new substances.' }
+    ],
+    q: 'What is the smallest unit of an element?',
+    a: ['atom']
+  },
+
+  Geography: {
+    items: [
+      { type: 'fact', text: 'Earth has seven continents.' },
+      { type: 'vocab', word: 'Continent', meaning: 'A large landmass on Earth.' },
+      { type: 'fact', text: 'Oceans cover most of Earth’s surface.' }
+    ],
+    q: 'What do we call large land areas like Asia or Africa?',
+    a: ['continent', 'continents']
+  }
+
+};
+
+  /* ---------- START ---------- */
+  document.getElementById('startBtn').addEventListener('click',()=>{
+    if(topicSelect.value !== '-Select Topic-') start(topicSelect.value);
+  });
+
+  /* ---------- FOOTER ---------- */
+  document.querySelectorAll('.footer-btn').forEach(btn=>{
+    btn.onclick=()=>showPage(btn.dataset.target);
+  });
+
+  /* ---------- BACK ---------- */
+  document.querySelectorAll('.back-btn').forEach(btn=>{
+    btn.onclick=()=>showPage('main');
+  });
+
+  renderLiked();
+  lucide.createIcons();
+});
+
+/* ---------- PAGE SWITCH ---------- */
+function showPage(id){
+  ['main','aboutPage','faqPage','privacyPage','ownerPage']
+    .forEach(p=>document.getElementById(p).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+function closePrivacy(){
+    showPage('main');
+}
+function closeFAQ(){
+    showPage('main');
+}
+function closeAbout(){
+    showPage('main');
+}
+function openMain(){
+    location.reload();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const darkToggle = document.getElementById('darkToggle');
+
+  // Restore state
+  if(localStorage.getItem('darkMode') === 'on'){
+    document.body.classList.add('dark');
+    darkToggle.checked = true;
+  }
+
+  // Save state
+  darkToggle.addEventListener('change', e => {
+    const isDark = e.target.checked;
+    document.body.classList.toggle('dark', isDark);
+    localStorage.setItem('darkMode', isDark ? 'on' : 'off');
+  });
+});
+/* ---------- START ---------- */
+function start(topic){
   topicCard.classList.add('hidden');
   factsCard.classList.remove('hidden');
   mysteryCard.classList.remove('hidden');
-  renderReels(t);
-  // Choose DB only if it actually has a mystery question
-  const source=(DB[t] && DB[t].q) ? DB[t] : example[t];
-  document.getElementById('q').textContent=source.q;
+  likedPanel.classList.remove('hidden');
+  renderReels(topic);
 }
 
-function renderReels(t){
-  const reels=document.getElementById('reels');
+/* ---------- REELS ---------- */
+function renderReels(topic){
   reels.innerHTML='';
-  const src=DB[t]||example[t];
-  src.items.slice(0,3).forEach(it=>{
-    const d=document.createElement('div'); d.className='reel';
-    if(it.type==='vocab'){
-      const h=document.createElement('h3'); h.textContent=it.word; d.appendChild(h);
+  const day = CONTENT[todayKey][topic];
 
-      const btn=document.createElement('button');
-      btn.textContent='Reveal meaning';
+  day.items.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='reel';
 
-      const p=document.createElement('p');
-      p.textContent=it.meaning;
-      p.style.display='none';
-
-      btn.onclick=function(){
-        clickSound.play();
-        p.style.display='block';
-        btn.style.display='none';
-      };
-
-      d.appendChild(btn);
-      d.appendChild(p);
-    } else {
-      const p=document.createElement('p'); p.textContent=`“${it.text}”`; d.appendChild(p);
+    if(item.type==='vocab'){
+      d.innerHTML=`
+        <h3>${item.word}</h3>
+        <button onclick="this.nextElementSibling.classList.remove('hidden')">Reveal meaning</button>
+        <p class="hidden">${item.meaning}</p>`;
+    }else{
+      d.innerHTML=`<p>“${item.text}”</p>`;
     }
-    const actions=document.createElement('div'); actions.className='actions';
-    const heart=document.createElement('i'); heart.setAttribute('data-lucide','heart'); heart.className='icon heart'; heart.onclick=()=>react(heart,'heart');
-    const down=document.createElement('i'); down.setAttribute('data-lucide','thumbs-down'); down.className='icon down'; down.onclick=()=>react(down,'down');
-    const share=document.createElement('i'); share.setAttribute('data-lucide','share'); share.className='icon share'; share.onclick=()=>shareItem(it.word||it.text);
-    actions.appendChild(heart); actions.appendChild(down); actions.appendChild(share);
-    d.appendChild(actions);
+
+    d.innerHTML+=`
+      <div class="actions">
+        <i data-lucide="heart"
+   class="icon heart ${likedThoughts.includes((item.text||item.word) + (item.meaning ? ' — ' + item.meaning : ''))?'active':''}"
+   onclick="toggleLike(
+     this,
+     '${(item.text||item.word).replace(/"/g,'')}',
+     '${item.meaning || ''}'
+   )">
+</i>
+        <i data-lucide="share" class="icon share"
+           onclick="shareItem('${item.text||item.word}','${item.type}','${item.meaning||''}',this)"></i>
+      </div>`;
+
     reels.appendChild(d);
   });
-  reels.innerHTML+=`<div class='reel'>That's all for today, come back tomorrow 😉</div>`;
+
+  reels.innerHTML+=`<div class="reel">That's all for today 🙂</div>`;
+  q.textContent = day.q;
   lucide.createIcons();
 }
 
-function react(el,type){clickSound.play(); const p=el.parentElement; [...p.children].forEach(i=>{if(i!==el&&(i.classList.contains('heart')||i.classList.contains('down')))i.classList.remove('active')}); el.classList.toggle('active')}
-function shareItem(txt){clickSound.play(); navigator.clipboard.writeText(`"${txt}". I learnt this from Once-A-Day! Go to --- to get more.`)}
-function check(){clickSound.play(); const t=localStorage.getItem('topic_'+today); const res=document.getElementById('res'); res.textContent=ans.value.toLowerCase()===((DB[t]||example[t]).a)?'Correct ✨':'Try again'}
-function toggleDark(){document.body.classList.toggle('dark')}
+/* ---------- LIKE ---------- */
+function toggleLike(el, txt, meaning = ''){
+  const fullText = meaning ? `${txt} — ${meaning}` : txt;
 
-let holdTimer;
-document.querySelector('h1').addEventListener('touchstart',()=>{holdTimer=setTimeout(()=>{enterOwner()},3000)});
-document.querySelector('h1').addEventListener('touchend',()=>{clearTimeout(holdTimer)});
-function enterOwner(){main.classList.add('hidden');ownerPage.style.display='block';renderTable()}
-function exitOwner(){ownerPage.style.display='none';main.classList.remove('hidden');localStorage.removeItem('topic_'+today);location.reload()}
-function renderTable(){schedule.innerHTML='<tr><th>Date</th>'+TOPICS.map(t=>`<th>${t}</th>`).join('')+'</tr>'; Object.keys(DB).forEach(d=>addRow(d))}
-function addDay(){const d=prompt('YYYY-MM-DD');if(!d)return;DB[d]??={};save();renderTable()}
-function addRow(d){const r=document.createElement('tr'); r.innerHTML=`<td>${d}</td>`+TOPICS.map(t=>`<td contenteditable oninput="edit('${d}','${t}',this.innerText)"></td>`).join(''); schedule.appendChild(r)}
-function edit(d,t,v){DB[d]??={};DB[d][t]={items:[{type:'fact',text:v}],q:'Example question',a:'example'}; save()}
-function save(){localStorage.setItem('oad_'+today,JSON.stringify(DB))}
-function openPrivacy(){main.classList.add('hidden');privacyPage.classList.remove('hidden')}
-function closePrivacy(){privacyPage.classList.add('hidden');main.classList.remove('hidden')}
+  if(el.classList.contains('active')){
+    el.classList.remove('active');
+    likedThoughts = likedThoughts.filter(x => x !== fullText);
+  } else {
+    el.classList.add('active');
+    likedThoughts.push(fullText);
+  }
 
-const saved=localStorage.getItem('topic_'+today); if(saved) start(saved);
-</script>
+  localStorage.setItem('likedThoughts', JSON.stringify(likedThoughts));
+  renderLiked();
+}
+
+function renderLiked(){
+  likedList.innerHTML='';
+  likedThoughts.forEach(t=>{
+    const p=document.createElement('p');
+    p.textContent=t;
+    likedList.appendChild(p);
+  });
+}
+
+/* ---------- QUIZ ---------- */
+function check(){
+  const src = CONTENT[todayKey][topicSelect.value];
+  const ans = document.getElementById('ans').value.trim().toLowerCase();
+  const correct = Array.isArray(src.a)
+    ? src.a.map(a=>a.toLowerCase()).includes(ans)
+    : ans===src.a.toLowerCase();
+
+  document.getElementById('res').textContent = correct?'Correct ✨':'Try again';
+  const card = document.getElementById('mysteryCard');
+const isDark = document.body.classList.contains('dark');
+
+if(correct){
+  card.style.background = isDark
+    ? '#1f7a4a'   // dark green
+    : '#d4f8e8';  // light green
+  launchConfetti();
+} else {
+  card.style.background = isDark
+    ? '#7a1f1f'   // dark red
+    : '#fde2e2';  // light red
+  card.classList.add('shake');
+  setTimeout(()=>card.classList.remove('shake'),450);
+}
+
+setTimeout(()=>card.style.background='',700);
+  if(correct){
+    let streak = Number(localStorage.getItem('streak')||0);
+    let last = localStorage.getItem('lastAttempt');
+    if(last!==todayKey){
+      streak++;
+      localStorage.setItem('streak',streak);
+      localStorage.setItem('lastAttempt',todayKey);
+      document.getElementById('streak').textContent=`🔥 ${streak}-day streak`;
+    }
+    launchConfetti();
+  }
+}
+
+/* ---------- CONFETTI ---------- */
+function launchConfetti(){
+  for(let i=0;i<30;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = (-10 - Math.random() * 20) + 'px'; // 👈 IMPORTANT
+    c.style.background = `hsl(${Math.random()*360},90%,60%)`;
+    c.style.animationDuration = 1 + Math.random() * 1 + 's';
+
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),2000);
+  }
+}
+
+/* ---------- SHARE ---------- */
+function shareItem(text,type,meaning,el){
+  const msg = type==='vocab'
+    ? `"${text}" — ${meaning} I learnt this from Once-A-Day! Go to -- to get more.`
+    : `"${text}" I learnt this from Once-A-Day! Go to -- to get more.`;
+
+  navigator.clipboard.writeText(msg);
+  el.classList.add('copied');
+  setTimeout(()=>el.classList.remove('copied'),300);
+  showToast('Copied!');
+}
+
+/* ---------- TOAST ---------- */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1200);
+}
+</script><!-- Toast -->
+<div id="toast" class="toast">Copied ✓</div>
 </body>
 </html>

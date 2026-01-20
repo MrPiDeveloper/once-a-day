@@ -32,6 +32,66 @@ button:hover{transform:scale(1.02)}
 .shake{animation:shake .45s}
 .confetti{position:fixed;top:-10px;width:8px;height:12px;opacity:.9;animation:fall 1.2s linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:0}}
+/* Native ad wrapper */
+.ad-native {
+  max-width: 720px;
+  margin: 20px auto;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--card-bg, #f6f7f9);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+/* Fade-in animation */
+.ad-native {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* When visible */
+.ad-native.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Optional subtle label (recommended) */
+.ad-native::before {
+  content: "Sponsored";
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+  text-align: left;
+}
+/* Default: hide all ads */
+.ad-native {
+  display: none;
+}
+
+/* Mobile: 1 ad */
+@media (max-width: 768px) {
+  .ad-native.mobile {
+    display: block;
+  }
+}
+
+/* Desktop: up to 2 ads */
+@media (min-width: 769px) {
+  .ad-native.desktop {
+    display: block;
+  }
+}
+
+/* Dark mode support */
+body.dark .ad-native {
+  background: #1e1e1e;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+body.dark .ad-native::before {
+  color: #aaa;
+}
 /* TOAST */
 #toast{
   position:fixed;
@@ -86,12 +146,28 @@ body.dark #toast{ background:#f3f3f3; color:#111; }
     <button type="button" id="startBtn">Start</button>
   </div>  <div class="card hidden" id="factsCard">
     <div class="ad-note">By watching ads, you help support this project ❤️</div>
-    <script async="async" data-cfasync="false" src="https://pl28519532.effectivegatecpm.com/8533ac3089149eaf6a65e522a6317304/invoke.js"></script>
-<div id="container-8533ac3089149eaf6a65e522a6317304"></div>
     <b>Facts & Vocabulary</b>
+    <div class="ad-native mobile">
+  <script async="async" data-cfasync="false"
+    src="https://pl28519532.effectivegatecpm.com/8533ac3089149eaf6a65e522a6317304/invoke.js">
+  </script>
+  <div id="container-8533ac3089149eaf6a65e522a6317304"></div>
+</div>
+      <div class="ad-native desktop">
+  <script async="async" data-cfasync="false"
+    src="https://pl28519532.effectivegatecpm.com/8533ac3089149eaf6a65e522a6317304/invoke.js">
+  </script>
+  <div id="container-8533ac3089149eaf6a65e522a6317304"></div>
+</div>
     <div class="reels" id="reels"></div>
   </div>  <div class="card hidden" id="mysteryCard">
     <div class="ad-note">Once-A-Day! was made by just one person. Seeing ads helps keep it alive 🙏</div>
+    <div class="ad-native desktop">
+  <script async="async" data-cfasync="false"
+    src="https://pl28519532.effectivegatecpm.com/8533ac3089149eaf6a65e522a6317304/invoke.js">
+  </script>
+  <div id="container-8533ac3089149eaf6a65e522a6317304"></div>
+</div>
     <b>Daily Mystery</b>
     <p id="q"></p>
     <input id="ans" placeholder="Your answer">
@@ -461,14 +537,30 @@ function launchConfetti(){
 function shareItem(text,type,meaning,el){
   const msg = type==='vocab'
     ? `"${text}" — ${meaning} I learnt this from Once-A-Day! Go to -- to get more.`
-    : `"${text}" I learnt this from Once-A-Day! Go to once-aday.vercel.app to get more.`;
+    : `"${text}" I learnt this from Once-A-Day! Go to -- to get more.`;
 
   navigator.clipboard.writeText(msg);
   el.classList.add('copied');
   setTimeout(()=>el.classList.remove('copied'),300);
   showToast('Copied!');
 }
+/* ---------- ADS ---------- */
+function showAds(){
+  document.querySelectorAll('.ad-native').forEach(ad=>{
+    ad.classList.add('show');
+  });
+}
+function start(topic){
+  topicCard.classList.add('hidden');
+  factsCard.classList.remove('hidden');
+  mysteryCard.classList.remove('hidden');
+  likedPanel.classList.remove('hidden');
 
+  renderReels(topic);
+  renderLiked();
+
+  showAds(); // 👈 AD fades in here
+}
 /* ---------- TOAST ---------- */
 function showToast(msg){
   const t=document.getElementById('toast');

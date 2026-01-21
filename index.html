@@ -160,6 +160,9 @@ body.dark #toast{ background:#f3f3f3; color:#111; }
     <p id="q"></p>
     <input id="ans" placeholder="Your answer">
     <button type="button" onclick="check()">Submit</button>
+    <button class="icon" onclick="showHint()">
+  <i data-lucide="bulb"></i>
+</button>
     <p id="res"></p>
   </div>
 </div><!-- LIKED --><div class="container hidden" id="likedPanel">
@@ -280,6 +283,7 @@ CONTENT[day1Key] = {
     ],
     q: 'What force pulls objects toward Earth?',
     a: ['gravity']
+    hint:'Discover credited to Isacc Newton'
   },
 
   Biology: {
@@ -290,6 +294,7 @@ CONTENT[day1Key] = {
     ],
     q: 'What is the basic unit of life?',
     a: ['cell']
+    hint:'4 letter word, starts with c'
   },
 
   History: {
@@ -300,12 +305,12 @@ CONTENT[day1Key] = {
     ],
     q: 'What invention helped spread knowledge quickly?',
     a: ['printing press', 'press']
+    hint: 'Look at today\'s facts'
   }
 
 };
 
-/* ================= DAY 2 ================= */
-CONTENT[day2Key] = {
+/* ================= DAY 2 ================= */+CONTENT[day2Key] = {
 
   Physics: {
     items: [
@@ -315,6 +320,7 @@ CONTENT[day2Key] = {
     ],
     q: 'What allows objects to move or change?',
     a: ['energy']
+    hint:'6 letters, starts with e, ends with y'
   },
 
   Chemistry: {
@@ -325,6 +331,7 @@ CONTENT[day2Key] = {
     ],
     q: 'What is the smallest unit of an element?',
     a: ['atom']
+    hint: 'Look at today\s facts'
   },
 
   Geography: {
@@ -335,6 +342,7 @@ CONTENT[day2Key] = {
     ],
     q: 'What do we call large land areas like Asia or Africa?',
     a: ['continent', 'continents']
+    hint: 'Look at today\s facts'
   }
 
 };
@@ -467,41 +475,68 @@ function renderLiked(){
 }
 
 /* ---------- QUIZ ---------- */
-function check(){
+let attempts = 0; // global counter for the current question
+
+function check() {
+  sound.play();
+
+  const todayKey = new Date().toISOString().slice(0,10);
   const src = CONTENT[todayKey][topicSelect.value];
-  const ans = document.getElementById('ans').value.trim().toLowerCase();
+  const userAns = document.getElementById('ans').value.trim().toLowerCase();
+
+  // Check if answer is correct
   const correct = Array.isArray(src.a)
-    ? src.a.map(a=>a.toLowerCase()).includes(ans)
-    : ans===src.a.toLowerCase();
+    ? src.a.map(a => a.toLowerCase()).includes(userAns)
+    : userAns === src.a.toLowerCase();
 
-  document.getElementById('res').textContent = correct?'Correct ✨':'Try again';
+  if(correct){
+    document.getElementById('res').textContent = 'Correct ✨';
+    attempts = 0; // reset attempts for next question
+  } else {
+    attempts++;
+    document.getElementById('res').textContent = 'Try again';
+  }
+
+  // ---- Auto-fill answer after 7 wrong attempts ----
+  if(attempts >= 7 && !correct){
+    document.getElementById('ans').value = Array.isArray(src.a) ? src.a[0] : src.a;
+    document.getElementById('res').textContent = 'Correct ✨';
+    attempts = 0;
+  }
+
+  // ---- STREAK LOGIC (only on correct) ----
+  let streak = Number(localStorage.getItem('streak') || 0);
+  let lastAttempt = localStorage.getItem('lastAttempt');
+
+  if(correct && lastAttempt !== todayKey){
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = yesterday.toISOString().slice(0,10);
+
+    streak = (lastAttempt === yesterdayKey) ? streak + 1 : 1;
+    localStorage.setItem('streak', streak);
+    localStorage.setItem('lastAttempt', todayKey);
+    document.getElementById('streak').textContent = `🔥 ${streak}-day streak`;
+  }
+
+  // ---- Mystery card colors + confetti ----
   const card = document.getElementById('mysteryCard');
-const isDark = document.body.classList.contains('dark');
+  const isDark = document.body.classList.contains('dark');
+  card.style.background = correct 
+    ? (isDark ? 'linear-gradient(135deg,#1faa59,#1e1714)' : 'linear-gradient(135deg,#2ecc71,#ffffff)')
+    : (isDark ? 'linear-gradient(135deg,#c0392b,#1e1714)' : 'linear-gradient(135deg,#e74c3c,#ffffff)');
 
-if(correct){
-  card.style.background = isDark
-    ? '#1f7a4a'   // dark green
-    : '#d4f8e8';  // light green
-  launchConfetti();
-} else {
-  card.style.background = isDark
-    ? '#7a1f1f'   // dark red
-    : '#fde2e2';  // light red
-  card.classList.add('shake');
-  setTimeout(()=>card.classList.remove('shake'),450);
+  if(correct) launchConfetti();
+  else { card.classList.add('shake'); setTimeout(()=>card.classList.remove('shake'),450); }
+  setTimeout(()=>card.style.background='',550);
 }
 
-setTimeout(()=>card.style.background='',700);
-  if(correct){
-    let streak = Number(localStorage.getItem('streak')||0);
-    let last = localStorage.getItem('lastAttempt');
-    if(last!==todayKey){
-      streak++;
-      localStorage.setItem('streak',streak);
-      localStorage.setItem('lastAttempt',todayKey);
-      document.getElementById('streak').textContent=`🔥 ${streak}-day streak`;
-    }
-    launchConfetti();
+// ---- Hint button ----
+function showHint() {
+  const todayKey = new Date().toISOString().slice(0,10);
+  const src = CONTENT[todayKey][topicSelect.value];
+  if(src && src.hint) {
+    alert(`Hint: ${src.hint}`);
   }
 }
 

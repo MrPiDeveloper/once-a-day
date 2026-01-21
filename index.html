@@ -218,10 +218,21 @@ This Privacy Policy may be updated at any time. Any changes will be posted on th
 <div data-target="faqPage" class="footer-btn faq" onclick="showPage('faqPage')">FAQ</div>
 <div data-target="privacyPage" class="footer-btn privacy" onclick="showPage('privacyPage')">Privacy</div>
 <script>
-/* ---------- GLOBAL DOM ---------- */
+/* ---------- GLOBAL DOM & VARIABLES ---------- */
 let topicCard, factsCard, mysteryCard, likedPanel, topicSelect, q, reels, likedList;
 let likedThoughts = JSON.parse(localStorage.getItem('likedThoughts') || '[]');
 const todayKey = new Date().toISOString().slice(0,10);
+let attempts = 0; // quiz attempt counter
+
+/* ---------- PAGE SWITCH ---------- */
+function showPage(id){
+  ['main','aboutPage','faqPage','privacyPage','ownerPage'].forEach(p =>
+    document.getElementById(p).classList.add('hidden')
+  );
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('hidden');
+}
+function closePage(){ showPage('main'); }
 
 /* ---------- DOM READY ---------- */
 document.addEventListener('DOMContentLoaded', () => {
@@ -236,235 +247,185 @@ document.addEventListener('DOMContentLoaded', () => {
   likedList   = document.getElementById('likedList');
 
   /* ---------- DARK MODE ---------- */
-  document.getElementById('darkToggle')
-    .addEventListener('change', e =>
-      document.body.classList.toggle('dark', e.target.checked)
-    );
-
-  /* ---------- TOPICS ---------- */
-  const TOPICS = ['-Select Topic-','Physics','Biology','History'];
-  TOPICS.forEach(t=>{
-    const o=document.createElement('option');
-    o.value=o.textContent=t;
-    topicSelect.appendChild(o);
-  });
-
-  /* ---------- DATE ---------- */
-  const now = new Date();
-  document.getElementById('date').textContent =
-    now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-  /* ---------- STREAK ---------- */
-  let streak = Number(localStorage.getItem('streak')||0);
-  let lastAttempt = localStorage.getItem('lastAttempt');
-  if(!lastAttempt){ streak = 1; localStorage.setItem('lastAttempt', todayKey); }
-  localStorage.setItem('streak', streak);
-  document.getElementById('streak').textContent = `🔥 ${streak}-day streak`;
-
-
- /* ---------- 2 DAYS OF CONTENT ---------- */
-const today = new Date();
-const day1Key = today.toISOString().slice(0,10);
-
-const day2 = new Date(today);
-day2.setDate(today.getDate() + 1);
-const day2Key = day2.toISOString().slice(0,10);
-
-window.CONTENT = {};
-
-/* ================= DAY 1 ================= */
-CONTENT[day1Key] = {
-
-  Physics: {
-    items: [
-      { type: 'fact', text: 'Light travels at a constant speed in a vacuum.' },
-      { type: 'vocab', word: 'Force', meaning: 'A push or pull that can change motion.' },
-      { type: 'fact', text: 'Gravity attracts objects with mass.' }
-    ],
-    q: 'What force pulls objects toward Earth?',
-    a: ['gravity']
-    hint:'Discover credited to Isacc Newton'
-  },
-
-  Biology: {
-    items: [
-      { type: 'fact', text: 'All living things are made of cells.' },
-      { type: 'vocab', word: 'Cell', meaning: 'The smallest unit of life.' },
-      { type: 'fact', text: 'Plants make food using sunlight.' }
-    ],
-    q: 'What is the basic unit of life?',
-    a: ['cell']
-    hint:'4 letter word, starts with c'
-  },
-
-  History: {
-    items: [
-      { type: 'fact', text: 'Writing allowed people to record information.' },
-      { type: 'vocab', word: 'Civilization', meaning: 'A complex society with cities and culture.' },
-      { type: 'fact', text: 'The printing press spread knowledge widely.' }
-    ],
-    q: 'What invention helped spread knowledge quickly?',
-    a: ['printing press', 'press']
-    hint: 'Look at today\'s facts'
-  }
-
-};
-
-/* ================= DAY 2 ================= */+CONTENT[day2Key] = {
-
-  Physics: {
-    items: [
-      { type: 'fact', text: 'Sound travels as waves through air.' },
-      { type: 'vocab', word: 'Energy', meaning: 'The ability to do work or cause change.' },
-      { type: 'fact', text: 'Objects fall at the same rate in a vacuum.' }
-    ],
-    q: 'What allows objects to move or change?',
-    a: ['energy']
-    hint:'6 letters, starts with e, ends with y'
-  },
-
-  Chemistry: {
-    items: [
-      { type: 'fact', text: 'Water is made of hydrogen and oxygen.' },
-      { type: 'vocab', word: 'Atom', meaning: 'The smallest unit of an element.' },
-      { type: 'fact', text: 'Chemical reactions form new substances.' }
-    ],
-    q: 'What is the smallest unit of an element?',
-    a: ['atom']
-    hint: 'Look at today\s facts'
-  },
-
-  Geography: {
-    items: [
-      { type: 'fact', text: 'Earth has seven continents.' },
-      { type: 'vocab', word: 'Continent', meaning: 'A large landmass on Earth.' },
-      { type: 'fact', text: 'Oceans cover most of Earth’s surface.' }
-    ],
-    q: 'What do we call large land areas like Asia or Africa?',
-    a: ['continent', 'continents']
-    hint: 'Look at today\s facts'
-  }
-
-};
-
-  /* ---------- START ---------- */
-  document.getElementById('startBtn').addEventListener('click',()=>{
-    if(topicSelect.value !== '-Select Topic-') start(topicSelect.value);
-  });
-
-  /* ---------- FOOTER ---------- */
-  document.querySelectorAll('.footer-btn').forEach(btn=>{
-    btn.onclick=()=>showPage(btn.dataset.target);
-  });
-
-  /* ---------- BACK ---------- */
-  document.querySelectorAll('.back-btn').forEach(btn=>{
-    btn.onclick=()=>showPage('main');
-  });
-
-  renderLiked();
-  lucide.createIcons();
-});
-
-/* ---------- PAGE SWITCH ---------- */
-function showPage(id){
-  ['main','aboutPage','faqPage','privacyPage','ownerPage']
-    .forEach(p=>document.getElementById(p).classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-function closePrivacy(){
-    showPage('main');
-}
-function closeFAQ(){
-    showPage('main');
-}
-function closeAbout(){
-    showPage('main');
-}
-function openMain(){
-    location.reload();
-}
-document.addEventListener('DOMContentLoaded', () => {
   const darkToggle = document.getElementById('darkToggle');
-
-  // Restore state
-  if(localStorage.getItem('darkMode') === 'on'){
+  if(localStorage.getItem('darkMode')==='on'){
     document.body.classList.add('dark');
     darkToggle.checked = true;
   }
-
-  // Save state
   darkToggle.addEventListener('change', e => {
     const isDark = e.target.checked;
     document.body.classList.toggle('dark', isDark);
     localStorage.setItem('darkMode', isDark ? 'on' : 'off');
   });
+
+  /* ---------- TOPICS DROPDOWN ---------- */
+  const TOPICS = ['-Select Topic-','Physics','Biology','History'];
+  TOPICS.forEach(t=>{
+    const o = document.createElement('option');
+    o.value = o.textContent = t;
+    topicSelect.appendChild(o);
+  });
+
+  /* ---------- DATE & STREAK ---------- */
+  const now = new Date();
+  document.getElementById('date').textContent = now.toLocaleDateString(undefined,{
+    weekday:'long',year:'numeric',month:'long',day:'numeric'
+  });
+  let streak = Number(localStorage.getItem('streak') || 0);
+  let lastAttempt = localStorage.getItem('lastAttempt');
+  if(!lastAttempt){ streak = 1; localStorage.setItem('lastAttempt', todayKey); }
+  localStorage.setItem('streak', streak);
+  document.getElementById('streak').textContent = `🔥 ${streak}-day streak`;
+
+  /* ---------- FOOTER & BACK BUTTONS ---------- */
+  document.querySelectorAll('.footer-btn').forEach(btn => {
+    btn.onclick = () => showPage(btn.dataset.target);
+  });
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.onclick = () => showPage(btn.dataset.target || 'main');
+  });
+
+  /* ---------- START BUTTON ---------- */
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    if(topicSelect.value !== '-Select Topic-') start(topicSelect.value);
+  });
+
+  /* ---------- LIKED PANEL & ICONS ---------- */
+  renderLiked();
+  lucide.createIcons();
 });
-/* ---------- START ---------- */
+
+/* ---------- EXAMPLE CONTENT (2 DAYS) ---------- */
+window.CONTENT = {};
+
+/* Day 1 */
+CONTENT[todayKey] = {
+  Physics: {
+    items:[
+      { type:'fact', text:'Light travels at a constant speed in a vacuum.' },
+      { type:'vocab', word:'Force', meaning:'A push or pull that can change motion.' },
+      { type:'fact', text:'Gravity attracts objects with mass.' }
+    ],
+    q:'What force pulls objects toward Earth?',
+    a:['gravity'],
+    hint:'Discovered by Isaac Newton'
+  },
+  Biology: {
+    items:[
+      { type:'fact', text:'All living things are made of cells.' },
+      { type:'vocab', word:'Cell', meaning:'The smallest unit of life.' },
+      { type:'fact', text:'Plants make food using sunlight.' }
+    ],
+    q:'What is the basic unit of life?',
+    a:['cell'],
+    hint:'4 letter word, starts with C'
+  },
+  History: {
+    items:[
+      { type:'fact', text:'Writing allowed people to record information.' },
+      { type:'vocab', word:'Civilization', meaning:'A complex society with cities and culture.' },
+      { type:'fact', text:'The printing press spread knowledge widely.' }
+    ],
+    q:'What invention helped spread knowledge quickly?',
+    a:['printing press','press'],
+    hint:'Look at today\'s facts'
+  }
+};
+
+/* Day 2 */
+const day2 = new Date();
+day2.setDate(day2.getDate()+1);
+const day2Key = day2.toISOString().slice(0,10);
+
+CONTENT[day2Key] = {
+  Physics: {
+    items:[
+      { type:'fact', text:'Sound travels as waves through air.' },
+      { type:'vocab', word:'Energy', meaning:'The ability to do work or cause change.' },
+      { type:'fact', text:'Objects fall at the same rate in a vacuum.' }
+    ],
+    q:'What allows objects to move or change?',
+    a:['energy'],
+    hint:'6 letters, starts with E, ends with Y'
+  },
+  Chemistry: {
+    items:[
+      { type:'fact', text:'Water is made of hydrogen and oxygen.' },
+      { type:'vocab', word:'Atom', meaning:'The smallest unit of an element.' },
+      { type:'fact', text:'Chemical reactions form new substances.' }
+    ],
+    q:'What is the smallest unit of an element?',
+    a:['atom'],
+    hint:'Look at today\'s facts'
+  },
+  Geography: {
+    items:[
+      { type:'fact', text:'Earth has seven continents.' },
+      { type:'vocab', word:'Continent', meaning:'A large landmass on Earth.' },
+      { type:'fact', text:'Oceans cover most of Earth’s surface.' }
+    ],
+    q:'What do we call large land areas like Asia or Africa?',
+    a:['continent','continents'],
+    hint:'Look at today\'s facts'
+  }
+};
+
+/* ---------- START FUNCTION ---------- */
 function start(topic){
   topicCard.classList.add('hidden');
   factsCard.classList.remove('hidden');
   mysteryCard.classList.remove('hidden');
   likedPanel.classList.remove('hidden');
+
   renderReels(topic);
+  renderLiked();
+  showAds(); // for ad fade-in
 }
 
-/* ---------- REELS ---------- */
+/* ---------- RENDER REELS ---------- */
 function renderReels(topic){
   reels.innerHTML='';
   const day = CONTENT[todayKey][topic];
-
   day.items.forEach(item=>{
     const d=document.createElement('div');
     d.className='reel';
-
     if(item.type==='vocab'){
       d.innerHTML=`
         <h3>${item.word}</h3>
         <button onclick="this.nextElementSibling.classList.remove('hidden')">Reveal meaning</button>
         <p class="hidden">${item.meaning}</p>`;
-    }else{
-      d.innerHTML=`<p>“${item.text}”</p>`;
-    }
-
+    } else d.innerHTML=`<p>“${item.text}”</p>`;
+    
     d.innerHTML+=`
       <div class="actions">
         <i data-lucide="heart"
-   class="icon heart ${likedThoughts.includes((item.text||item.word) + (item.meaning ? ' — ' + item.meaning : ''))?'active':''}"
-   onclick="toggleLike(
-     this,
-     '${(item.text||item.word).replace(/"/g,'')}',
-     '${item.meaning || ''}'
-   )">
-</i>
+           class="icon heart ${likedThoughts.includes((item.text||item.word) + (item.meaning ? ' — ' + item.meaning : ''))?'active':''}"
+           onclick="toggleLike(this,'${(item.text||item.word).replace(/"/g,'')}','${item.meaning||''}')"></i>
         <i data-lucide="share" class="icon share"
            onclick="shareItem('${item.text||item.word}','${item.type}','${item.meaning||''}',this)"></i>
+        <i data-lucide="bulb" class="icon hint" onclick="showHint()"></i>
       </div>`;
-
+    
     reels.appendChild(d);
   });
-
   reels.innerHTML+=`<div class="reel">That's all for today 🙂</div>`;
   q.textContent = day.q;
   lucide.createIcons();
 }
 
-/* ---------- LIKE ---------- */
-function toggleLike(el, txt, meaning = ''){
+/* ---------- LIKE & LIKED PANEL ---------- */
+function toggleLike(el, txt, meaning=''){
   const fullText = meaning ? `${txt} — ${meaning}` : txt;
-
   if(el.classList.contains('active')){
     el.classList.remove('active');
-    likedThoughts = likedThoughts.filter(x => x !== fullText);
+    likedThoughts = likedThoughts.filter(x=>x!==fullText);
   } else {
     el.classList.add('active');
     likedThoughts.push(fullText);
   }
-
   localStorage.setItem('likedThoughts', JSON.stringify(likedThoughts));
   renderLiked();
 }
-
 function renderLiked(){
   likedList.innerHTML='';
   likedThoughts.forEach(t=>{
@@ -474,83 +435,65 @@ function renderLiked(){
   });
 }
 
-/* ---------- QUIZ ---------- */
-let attempts = 0; // global counter for the current question
-
-function check() {
+/* ---------- QUIZ CHECK ---------- */
+function check(){
   sound.play();
-
-  const todayKey = new Date().toISOString().slice(0,10);
   const src = CONTENT[todayKey][topicSelect.value];
   const userAns = document.getElementById('ans').value.trim().toLowerCase();
-
-  // Check if answer is correct
-  const correct = Array.isArray(src.a)
-    ? src.a.map(a => a.toLowerCase()).includes(userAns)
-    : userAns === src.a.toLowerCase();
+  const correct = Array.isArray(src.a) ? src.a.map(a=>a.toLowerCase()).includes(userAns) : userAns===src.a.toLowerCase();
 
   if(correct){
-    document.getElementById('res').textContent = 'Correct ✨';
-    attempts = 0; // reset attempts for next question
+    document.getElementById('res').textContent='Correct ✨';
+    attempts=0;
   } else {
     attempts++;
-    document.getElementById('res').textContent = 'Try again';
+    document.getElementById('res').textContent='Try again';
   }
 
-  // ---- Auto-fill answer after 7 wrong attempts ----
-  if(attempts >= 7 && !correct){
-    document.getElementById('ans').value = Array.isArray(src.a) ? src.a[0] : src.a;
-    document.getElementById('res').textContent = 'Correct ✨';
-    attempts = 0;
+  if(attempts>=7 && !correct){
+    document.getElementById('ans').value = Array.isArray(src.a)? src.a[0] : src.a;
+    document.getElementById('res').textContent='Correct ✨';
+    attempts=0;
   }
 
-  // ---- STREAK LOGIC (only on correct) ----
-  let streak = Number(localStorage.getItem('streak') || 0);
+  // Streak
+  let streak = Number(localStorage.getItem('streak')||0);
   let lastAttempt = localStorage.getItem('lastAttempt');
-
-  if(correct && lastAttempt !== todayKey){
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+  if(correct && lastAttempt!==todayKey){
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
     const yesterdayKey = yesterday.toISOString().slice(0,10);
-
-    streak = (lastAttempt === yesterdayKey) ? streak + 1 : 1;
-    localStorage.setItem('streak', streak);
-    localStorage.setItem('lastAttempt', todayKey);
-    document.getElementById('streak').textContent = `🔥 ${streak}-day streak`;
+    streak = (lastAttempt===yesterdayKey)? streak+1 : 1;
+    localStorage.setItem('streak',streak);
+    localStorage.setItem('lastAttempt',todayKey);
+    document.getElementById('streak').textContent=`🔥 ${streak}-day streak`;
   }
 
-  // ---- Mystery card colors + confetti ----
+  // Card shading + confetti
   const card = document.getElementById('mysteryCard');
   const isDark = document.body.classList.contains('dark');
-  card.style.background = correct 
-    ? (isDark ? 'linear-gradient(135deg,#1faa59,#1e1714)' : 'linear-gradient(135deg,#2ecc71,#ffffff)')
-    : (isDark ? 'linear-gradient(135deg,#c0392b,#1e1714)' : 'linear-gradient(135deg,#e74c3c,#ffffff)');
-
+  card.style.background = correct ? 
+    (isDark?'linear-gradient(135deg,#1faa59,#1e1714)':'linear-gradient(135deg,#2ecc71,#ffffff)') :
+    (isDark?'linear-gradient(135deg,#c0392b,#1e1714)':'linear-gradient(135deg,#e74c3c,#ffffff)');
   if(correct) launchConfetti();
   else { card.classList.add('shake'); setTimeout(()=>card.classList.remove('shake'),450); }
   setTimeout(()=>card.style.background='',550);
 }
 
-// ---- Hint button ----
-function showHint() {
-  const todayKey = new Date().toISOString().slice(0,10);
+/* ---------- SHOW HINT ---------- */
+function showHint(){
   const src = CONTENT[todayKey][topicSelect.value];
-  if(src && src.hint) {
-    alert(`Hint: ${src.hint}`);
-  }
+  if(src && src.hint) alert(`Hint: ${src.hint}`);
 }
 
 /* ---------- CONFETTI ---------- */
 function launchConfetti(){
   for(let i=0;i<30;i++){
-    const c = document.createElement('div');
-    c.className = 'confetti';
-
-    c.style.left = Math.random() * 100 + 'vw';
-    c.style.top = (-10 - Math.random() * 20) + 'px'; // 👈 IMPORTANT
-    c.style.background = `hsl(${Math.random()*360},90%,60%)`;
-    c.style.animationDuration = 1 + Math.random() * 1 + 's';
-
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.top=(-10-Math.random()*20)+'px';
+    c.style.background=`hsl(${Math.random()*360},90%,60%)`;
+    c.style.animationDuration=(1+Math.random()*1)+'s';
     document.body.appendChild(c);
     setTimeout(()=>c.remove(),2000);
   }
@@ -558,38 +501,29 @@ function launchConfetti(){
 
 /* ---------- SHARE ---------- */
 function shareItem(text,type,meaning,el){
-  const msg = type==='vocab'
-    ? `"${text}" — ${meaning} I learnt this from Once-A-Day! Go to once-a-day.vercel.app to get more.`
-    : `"${text}" I learnt this from Once-A-Day! Go to once-a-day.vercel.app to get more.`;
-
+  const msg = type==='vocab'? `"${text}" — ${meaning} I learnt this from Once-A-Day!` 
+                           : `"${text}" I learnt this from Once-A-Day!`;
   navigator.clipboard.writeText(msg);
   el.classList.add('copied');
   setTimeout(()=>el.classList.remove('copied'),300);
   showToast('Copied!');
 }
-/* ---------- ADS ---------- */
-function showAds(){
-  document.querySelectorAll('.ad-native').forEach(ad=>{
-    ad.classList.add('show');
-  });
-}
-function start(topic){
-  topicCard.classList.add('hidden');
-  factsCard.classList.remove('hidden');
-  mysteryCard.classList.remove('hidden');
-  likedPanel.classList.remove('hidden');
 
-  renderReels(topic);
-  renderLiked();
-
-  showAds(); // 👈 AD fades in here
-}
 /* ---------- TOAST ---------- */
 function showToast(msg){
   const t=document.getElementById('toast');
+  if(!t) return;
   t.textContent=msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),1200);
+}
+
+/* ---------- SOUND ---------- */
+const sound = new Howl({src:['https://www.soundjay.com/button/sounds/button-16.mp3'],volume:.25});
+
+/* ---------- AD FADE IN ---------- */
+function showAds(){
+  document.querySelectorAll('.ad-native').forEach(ad=>ad.classList.add('show'));
 }
 </script><!-- Toast -->
 <div id="toast" class="toast">Copied ✓</div>

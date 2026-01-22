@@ -571,8 +571,8 @@ function launchConfetti(){
 
 /* ---------- SHARE ---------- */
 function shareItem(text,type,meaning,el){
-  const msg = type==='vocab'? `"${text}" — ${meaning} I learnt this from Once-A-Day!` 
-                           : `"${text}" I learnt this from Once-A-Day!`;
+  const msg = type==='vocab'? `"${text}" — ${meaning} I learnt this from Once-A-Day! Go to once-a-day.vercel.app to get more.` 
+                           : `"${text}" I learnt this from Once-A-Day! Go to once-a-day.vercel.app to get more.`;
   navigator.clipboard.writeText(msg);
   el.classList.add('copied');
   setTimeout(()=>el.classList.remove('copied'),300);

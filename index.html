@@ -131,7 +131,59 @@ body.dark #toast{ background:#f3f3f3; color:#111; }
   50%{ transform:scale(1.35); }
   100%{ transform:scale(1); }
 }
+/* ================= HINT (BULB) BUTTON ================= */
 
+.hint-btn {
+  cursor: pointer;
+  stroke: #f1c40f;              /* yellow outline */
+  fill: none;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.15s ease,
+              fill 0.15s ease,
+              stroke 0.15s ease,
+              filter 0.15s ease;
+  margin-top: 8px;
+}
+
+/* Hover glow */
+.hint-btn:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(241,196,15,.7));
+}
+
+/* Clicked / active state */
+.hint-btn.active {
+  fill: #f1c40f;                /* filled yellow */
+  stroke: #f39c12;
+  filter: drop-shadow(0 0 10px rgba(241,196,15,.9));
+}
+
+/* Dark mode adjustment */
+body.dark .hint-btn {
+  stroke: #f9d423;
+}
+
+body.dark .hint-btn.active {
+  fill: #f9d423;
+  stroke: #f6c90e;
+}
+
+/* Optional subtle pulse when shown */
+@keyframes hintPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.hint-btn.active {
+  animation: hintPulse 0.3s ease;
+}
+.para{
+    position: relative;
+    left: 30px;
+    margin-top: -23px;
+}
 </style>
 </head>
 <body><!-- MAIN --><div class="container" id="main">
@@ -160,8 +212,8 @@ body.dark #toast{ background:#f3f3f3; color:#111; }
     <p id="q"></p>
     <input id="ans" placeholder="Your answer">
     <button type="button" onclick="check()">Submit</button>
-  <i data-lucide="bulb" class="icon hint" onclick="showHint()"></i>
-</button>
+  <i data-lucide="lightbulb" class="icon hint-btn hint-off" title="Show Hint" onclick="showHint()"></i>
+  <p class="para">Hint</p>
     <p id="res"></p>
   </div>
 </div><!-- LIKED --><div class="container hidden" id="likedPanel">
@@ -479,11 +531,27 @@ function check(){
 }
 
 /* ---------- SHOW HINT ---------- */
-function showHint(){
-  const src = CONTENT[todayKey][topicSelect.value];
-  if(src && src.hint) alert(`Hint: ${src.hint}`);
-}
+function showHint() {
+  const todayKey = new Date().toISOString().slice(0,10);
+  const src = CONTENT[todayKey]?.[topicSelect.value];
+  if(!src || !src.hint) return;
 
+  // Highlight bulb
+  document.querySelector('.hint-btn')?.classList.add('active');
+
+  // Find or create hint box
+  let hintBox = document.getElementById('hintBox');
+  if(!hintBox){
+    hintBox = document.createElement('div');
+    hintBox.id = 'hintBox';
+    hintBox.style.marginTop = '8px';
+    hintBox.style.fontSize = '.9rem';
+    hintBox.style.opacity = '.9';
+    q.parentElement.appendChild(hintBox);
+  }
+
+  hintBox.textContent = `Hint: ${src.hint}`;
+}
 /* ---------- CONFETTI ---------- */
 function launchConfetti(){
   for(let i=0;i<30;i++){
